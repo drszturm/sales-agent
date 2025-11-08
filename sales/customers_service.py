@@ -1,4 +1,3 @@
-
 from app.models.customer import Customer
 from app.schemas.customer import CustomerCreate, CustomerUpdate
 from sqlalchemy.orm import Session
