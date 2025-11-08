@@ -1,20 +1,22 @@
 # pip3 install langchain_openai
 # python3 deepseek_langchain.py
+import getpass
 import logging
+import os
 
 import pandas as pd
 from langchain.agents import create_agent
-from langgraph.checkpoint.memory import InMemorySaver
 from langchain_deepseek import ChatDeepSeek
+from langgraph.checkpoint.memory import InMemorySaver
+
 from config import settings
-import getpass
-import os
+
 # Read entire XLSX file
 
 logger = logging.getLogger(__name__)
 model = ChatDeepSeek(
     model="deepseek-chat",
-    temperature=0,
+    temperature=1.5,
     max_tokens=None,
     timeout=None,
     max_retries=2,
@@ -35,6 +37,7 @@ class DeepSeekLCService:
             system_prompt="You are a helpful supermarket salesman.Be concise and accurate."
             "if do not know the customer name, Always ask for the customer's name at the beginning of the conversation,"
             "The supermarket is located in Brazil and sells groceries and household items."
+            "Never ask for the customer phone number, it is provided in the user message<client_phone>."
             "load products and use it to answer customer questions about products and prices."
             "ask custommer name his name and use tool set_customer_contact to store it with the telephone number provided by in the begining of the user msg<client_phone>."
             "if the customer ask for product list, load the product list use the tool load_products and provide options"
