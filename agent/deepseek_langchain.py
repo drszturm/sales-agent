@@ -1,8 +1,11 @@
 # pip3 install langchain_openai
 # python3 deepseek_langchain.py
+import logging
+
 import pandas as pd
 from langchain.agents import create_agent
 from langgraph.checkpoint.memory import InMemorySaver
+
 from config import settings
 
 # Read entire XLSX file
@@ -17,31 +20,37 @@ class DeepSeekLCService:
             tools=[load_products, set_customer_contact, get_actual_phone_number],
             system_prompt="You are a helpful supermarket salesman.You are a a supermarket salesman that want be helpful. Be concise and accurate."
             "The supermarket is located in Brazil and sells groceries and household items."
-            "load files and use it to answer customer questions about products and prices."
-            "ask custommer name an use tool set_customer_contact to store it with the telephone number provided by the tool get_actual_phone_number."
+            "load products and use it to answer customer questions about products and prices."
+            "ask custommer name his name and use tool set_customer_contact to store it with the telephone number provided by the tool get_actual_phone_number."
             "if the customer ask for product list, load the product list use the tool load_products and provide options"
             "The supermarket name is Bom preço Supermercados."
             "It is located at 9 de Julho Avenue, 1234, São Paulo, SP, Brazil."
-            "Do not say you are an AI model, always pretend to be a human supermarket salesman."
             "DO not say the product list with prices befeore the customer ask for it."
+            "If a product is not in stock, inform the customer politely. and offer a similar product if possible."
             "start the conversation always with good morning, good afternoon or good night based on current time. gmt -3 timezone."
-            " give options for products and values, calculate total when asked for,"
-            " answer in portuguese from brazil. when the question is not related to supermarket,"
-            " answer that you are a supermarket salesman and can only help with supermarket related questions."
+            "give options for products and values, calculate total when asked for,"
+            "answer in portuguese from brazil. when the question is not related to supermarket,"
+            "answer that you are a supermarket salesman and can only help with supermarket related questions."
             "when providing product options, always include prices and quantities."
-            " when the person finish the purchase, provide a summary of the items bought with total value."
-            " and than ask payment method 1 for pix, 2 for credit card , 3 for debit card or 4 for cash or 5 in person payment."
-            " ask the address for delivery and if the person want delivery."
-            " if payment method is pix, generate a fake pix code."
-            "the prices are the same as a supermarket in brazil. as https://www.google.com/aclk?sa=L&pf=1&ai=DChsSEwiQgt635d6QAxWaU0gAHaK-EBwYACICCAEQARoCY2U&co=1&ase=2&gclid=Cj0KCQiAq7HIBhDoARIsAOATDxAdGrpqvi2YryVg68hujRJIrTHq5EOzpzvHn6d2maMkUaE7OAb5-QMaAv8DEALw_wcB&cid=CAAS9gHkaOkONc8eLUmAzvNBQ_myGZUaM6HPAuwtdwoMT0iF54fY0rs1sDfJj6-OtpzwX8XARn2UeeJ2zdvzk8z1cibzpum6C_ngv8cB_4XswWWm6w_EaUzi2DbPb_vYFFmnbPiCzbCZMXkTZFspONvsvpCWjYJhZV4XEOwZcEaPpMX8YoQbiLT47eIkK66Q-necjv6l-zBDosiRD4QrPEFMWBkGt97myvETA_DWPEL1O1ABEHfLsTbvPaAZL9xC2-IJ6TuZIINwrL6rrwVKMSwOKx_YrrniNBzqo_uEI6ILPfthhMInK91EvMNgo0aPm2Lccy19FnXZEe8&cce=2&category=acrcp_v1_32&sig=AOD64_3JkmjAPtiN1JNhUZ8NndgrB-mHng&q&nis=4&adurl=https://mercado.carrefour.com.br"
-            " always ask how can you help the customer.",
+            "when the person finish the purchase, provide a summary of the items bought with total value."
+            "and than ask payment method 1 for pix, 2 for credit card , 3 for debit card or 4 for cash or 5 in person payment."
+            "ask the address for delivery and if the person want delivery."
+            "if payment method is pix, generate a fake pix code."
+            "always ask how can you help the customer.",
         )
 
     def chat_completion(
-        self, messages, max_tokens=2048, temperature=0.7, stream=False, prompt=""
+        self,
+        messages,
+        session_id,
+        client_phone,
+        max_tokens=2048,
+        temperature=0.7,
+        stream=False,
+        prompt="",
     ):
-        print("Invoking DeepSeek LLM via LangChain...")
-        print("Messages:", messages)
+        # print("Invoking DeepSeek LLM via LangChain...")
+        # print("Messages:", messages)
         response = self.llm.invoke(
             {
                 "messages": [
@@ -49,10 +58,10 @@ class DeepSeekLCService:
                     for message in messages
                 ]
             },
-            {"configurable": {"thread_id": "1"}},
+            {"configurable": {"thread_id": client_phone}},
         )
-        print(response)
-        print("Response content:", response["messages"])
+        # print(response)
+        print("Response content:", response["messages"][-1])
         return response["messages"][-1]
 
 
@@ -99,6 +108,7 @@ def set_customer_contact(name: str, cellphone: str) -> str:
     """
     # In a real implementation, this could store the name in a database
     # or session context. Here, we simply return a confirmation message.
+    logging.info(f"Storing customer name: {name} for cellphone: {cellphone}")
     return f"Customer name '{name}' has been stored."
 
 

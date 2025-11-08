@@ -5,13 +5,13 @@ from unittest.mock import AsyncMock, Mock
 
 import pytest
 import pytest_asyncio
+from evolution_client import EvolutionClient
 from fakeredis import aioredis
 from fastapi.testclient import TestClient
+from mcp_client import MCPClient
 
 from cache import CacheManager
-from evolution_client import EvolutionClient
 from main import app
-from mcp_client import MCPClient
 
 
 @pytest.fixture

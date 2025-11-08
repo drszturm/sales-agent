@@ -1,5 +1,5 @@
+from agent.deepseek_langchain import deepseek_lc_service
 from agent.deepseek_models import DeepSeekMessage
-from agent.deepseek_service import deepseek_service
 from agent.mcp_models import CallToolResult, ContentType, TextContent
 from config import settings
 from models import MCPRequest, MCPResponse
@@ -24,8 +24,12 @@ class MCPClient:
                         content=f"<saleto${request.session_id}>\n\n" + msg.content,
                     )
                 )
-            ds_service = deepseek_service
-            result = await ds_service.chat_completion(messages=messages)
+            ds_service = deepseek_lc_service
+            result = ds_service.chat_completion(
+                messages=messages,
+                session_id=request.session_id,
+                client_phone=request.session_id,
+            )
 
             CallToolResult(
                 content=[TextContent(type=ContentType.TEXT, text=result.content)]

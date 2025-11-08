@@ -108,7 +108,7 @@ async def langchain(
     try:
         logger.info(f"data: {messages}")
 
-        response = deepseek_lc_service.chat_completion(messages)
+        response = deepseek_lc_service.chat_completion(messages, 1, "5562993434010")
 
         return {"status": "success", "message": str(response)}
     except Exception as e:
