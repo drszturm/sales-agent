@@ -5,12 +5,24 @@ import logging
 import pandas as pd
 from langchain.agents import create_agent
 from langgraph.checkpoint.memory import InMemorySaver
-
+from langchain_deepseek import ChatDeepSeek
 from config import settings
-
+import getpass
+import os
 # Read entire XLSX file
 
 logger = logging.getLogger(__name__)
+model = ChatDeepSeek(
+    model="deepseek-chat",
+    temperature=0,
+    max_tokens=None,
+    timeout=None,
+    max_retries=2,
+    # other params...
+)
+
+if not os.getenv("DEEPSEEK_API_KEY"):
+    os.environ["DEEPSEEK_API_KEY"] = getpass.getpass("Enter your DeepSeek API key: ")
 
 
 class DeepSeekLCService:
@@ -18,7 +30,7 @@ class DeepSeekLCService:
         self.api_key = settings.DEEPSEEK_API_KEY
         self.llm = create_agent(
             checkpointer=InMemorySaver(),
-            model="deepseek-chat",  # intalled model="claude-sonnet-4-5-20250929",
+            model=model,  # intalled model="claude-sonnet-4-5-20250929",
             tools=[load_products, set_customer_contact, get_actual_phone_number],
             system_prompt="You are a helpful supermarket salesman.Be concise and accurate."
             "if do not know the customer name, Always ask for the customer's name at the beginning of the conversation,"
@@ -47,8 +59,6 @@ class DeepSeekLCService:
         messages,
         session_id,
         client_phone,
-        max_tokens=2048,
-        temperature=0.7,
         stream=False,
         prompt="",
     ):
@@ -59,7 +69,7 @@ class DeepSeekLCService:
                 "messages": [
                     {
                         "role": message.role,
-                        "content": f"<{client_phone}>" + message.content,
+                        "content": f"<{session_id}+{client_phone}>" + message.content,
                     }
                     for message in messages
                 ]
