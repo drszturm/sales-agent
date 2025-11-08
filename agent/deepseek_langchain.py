@@ -10,6 +10,8 @@ from config import settings
 
 # Read entire XLSX file
 
+logger = logging.getLogger(__name__)
+
 
 class DeepSeekLCService:
     def __init__(self):
@@ -18,10 +20,11 @@ class DeepSeekLCService:
             checkpointer=InMemorySaver(),
             model="deepseek-chat",  # intalled model="claude-sonnet-4-5-20250929",
             tools=[load_products, set_customer_contact, get_actual_phone_number],
-            system_prompt="You are a helpful supermarket salesman.You are a a supermarket salesman that want be helpful. Be concise and accurate."
+            system_prompt="You are a helpful supermarket salesman.Be concise and accurate."
+            "if do not know the customer name, Always ask for the customer's name at the beginning of the conversation,"
             "The supermarket is located in Brazil and sells groceries and household items."
             "load products and use it to answer customer questions about products and prices."
-            "ask custommer name his name and use tool set_customer_contact to store it with the telephone number provided by the tool get_actual_phone_number."
+            "ask custommer name his name and use tool set_customer_contact to store it with the telephone number provided by in the begining of the user msg<client_phone>."
             "if the customer ask for product list, load the product list use the tool load_products and provide options"
             "The supermarket name is Bom preço Supermercados."
             "It is located at 9 de Julho Avenue, 1234, São Paulo, SP, Brazil."
@@ -54,7 +57,10 @@ class DeepSeekLCService:
         response = self.llm.invoke(
             {
                 "messages": [
-                    {"role": message.role, "content": message.content}
+                    {
+                        "role": message.role,
+                        "content": f"<{client_phone}>" + message.content,
+                    }
                     for message in messages
                 ]
             },
@@ -143,7 +149,7 @@ def get_customer_by_phone_number(phone_number: str) -> str | None:
 
     # In a real implementation, this could query a database.
     # Here, we return a placeholder name.
-    return "Customer Name"
+    return "David"
 
 
 deepseek_lc_service = DeepSeekLCService()
