@@ -1,3 +1,4 @@
+import logging
 from fastapi import Depends
 from sqlalchemy.orm import Session
 
@@ -7,6 +8,9 @@ from sales.customer_schema import CustomerCreate
 from sales.customers_service import CustomerService
 
 Base.metadata.create_all(bind=engine)
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
 class CustomerManager:
@@ -20,7 +24,9 @@ class CustomerManager:
 
     def get_customer(self, cellphone: str, db: Session = Depends(get_db)):
         service = CustomerService(self.db)
+        logger.info(f"Fetching customer with cellphone: {cellphone}")
         customer = service.get_customer(cellphone)
+        logger.info(f"Found customer: {customer}")
         if customer is None:
-            print("Customer not found")
+            logger.info("Customer not found")
         return customer
