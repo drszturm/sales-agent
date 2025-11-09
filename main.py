@@ -1,4 +1,5 @@
 import logging
+import os
 from typing import Any
 
 from fastapi import BackgroundTasks, FastAPI, HTTPException
@@ -18,6 +19,8 @@ from models import (
     SendMessageRequest,
     WebhookPayload,
 )
+from utils.rabbitmq_consumer import EvolutionRabbitMQConsumer
+from utils.redis_cache import RedisCache
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -57,10 +60,12 @@ deepseek_lc_service = DeepSeekLCService()
 # Store conversation sessions
 conversation_sessions: dict[str, list[MCPMessage]] = {}
 
+# Initialize components
+redis_url = os.getenv("REDIS_URL", "redis://redis:6379")
+rabbitmq_url = os.getenv("RABBITMQ_URL", "amqp://admin:admin@rabbitmq:5672/default")
 
-async def startup_event() -> None:
-    """Initialize connections on startup"""
-    logger.info("Starting Evolution API - MCP Bridge")
+redis_cache = RedisCache(redis_url)
+rabbitmq_consumer = EvolutionRabbitMQConsumer(rabbitmq_url, redis_cache)
 
 
 @app.get("/")
@@ -238,6 +243,24 @@ async def setup_webhook(instance: str):
     except Exception as e:
         logger.error(f"Error setting up webhook: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+async def main():
+    """Main server loop."""
+
+    async def handle_message_upsert(event_data: dict):
+        """Handle incoming messages."""
+        instance = event_data.get("instance")
+        message = event_data.get("data", {}).get("message")
+
+        if instance and message:
+            await redis_cache.cache_event(f"messages:{instance}", message)
+
+    rabbitmq_consumer.register_callback("MESSAGES_UPSERT", handle_message_upsert)
+
+    await rabbitmq_consumer.consume_events(
+        ["MESSAGES_UPSERT", "MESSAGES_UPDATE", "INSTANCE_CREATE", "QRCODE_UPDATED"]
+    )
 
 
 if __name__ == "__main__":

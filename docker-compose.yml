@@ -1,33 +1,41 @@
 version: '3.8'
 
 services:
-  evolution-mcp-bridge:
+  app:
     build: .
     ports:
       - "8000:8000"
     environment:
+      - REDIS_URL=redis://redis:6379
+      - RABBITMQ_URL=amqp://admin:admin@rabbitmq:5672/default
       - EVOLUTION_API_BASE_URL=${EVOLUTION_API_BASE_URL}
       - EVOLUTION_API_KEY=${EVOLUTION_API_KEY}
       - MCP_SERVER_URL=${MCP_SERVER_URL}
       - MCP_API_KEY=${MCP_API_KEY}
-      - HOST=0.0.0.0
-      - PORT=8000
-      - WEBHOOK_URL=${WEBHOOK_URL}
-    volumes:
-      - .:/app
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
+      - DEEPSEEK_BASE_URL=${DEEPSEEK_BASE_URL}
+    depends_on:
+      - redis
+      - rabbitmq
 
-  # Optional: Include your MCP server if it's also containerized
-  mcp-server:
-    image: your-mcp-server-image:latest
+  redis:
+    image: redis:7-alpine
     ports:
-      - "8001:8000"
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  rabbitmq:
+    image: rabbitmq:3-management
     environment:
-      - MCP_API_KEY=${MCP_API_KEY}
-    restart: unless-stopped
+      - RABBITMQ_DEFAULT_USER=admin
+      - RABBITMQ_DEFAULT_PASS=admin
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+
+volumes:
+  redis_data:
+  rabbitmq_data:

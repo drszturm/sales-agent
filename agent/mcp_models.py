@@ -11,6 +11,8 @@ class ToolType(str, Enum):
 class ContentType(str, Enum):
     TEXT = "text"
     IMAGE = "image"
+    AUDIO = "audio"
+    VIDEO = "video"
 
 
 class TextContent(BaseModel):
