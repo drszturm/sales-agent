@@ -20,6 +20,7 @@ class RedisCache:
             self.client = redis.from_url(
                 redis_url, decode_responses=True, encoding="utf-8"
             )
+            logger.info("Connected to Redis successfully.")
         except Exception as e:
             logger.error(f"Failed to connect to Redis: {e}")
             raise Exception(f"Failed to connect to Redis: {e}")
