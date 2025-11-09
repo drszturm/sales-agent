@@ -1,4 +1,4 @@
-from agent.deepseek_langchain import deepseek_lc_service
+from agent.deepseek_langchain_service import deepseek_lc_service
 from agent.deepseek_models import DeepSeekMessage
 from agent.mcp_models import CallToolResult, ContentType, TextContent
 from config import settings

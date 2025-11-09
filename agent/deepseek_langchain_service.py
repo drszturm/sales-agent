@@ -3,6 +3,7 @@
 import getpass
 import logging
 import os
+from typing import Any
 
 import pandas as pd
 from langchain.agents import create_agent
@@ -10,6 +11,8 @@ from langchain_deepseek import ChatDeepSeek
 from langgraph.checkpoint.memory import InMemorySaver
 
 from config import settings
+from sales.customer_management import CustomerManager
+from sales.customer_schema import CustomerCreate
 
 # Read entire XLSX file
 
@@ -35,6 +38,7 @@ class DeepSeekLCService:
             model=model,  # intalled model="claude-sonnet-4-5-20250929",
             tools=[load_products, set_customer_contact, get_actual_phone_number],
             system_prompt="You are a helpful supermarket salesman.Be concise and accurate."
+            "You are selling  through whatsapp messages."
             "if do not know the customer name, Always ask for the customer's name at the beginning of the conversation,"
             "The supermarket is located in Brazil and sells groceries and household items."
             "Never ask for the customer phone number, it is provided in the user message<client_phone>."
@@ -80,8 +84,11 @@ class DeepSeekLCService:
             {"configurable": {"thread_id": client_phone}},
         )
         # print(response)
-        print("Response content:", response["messages"][-1])
+        # print("Response content:", response["messages"][-1])
         return response["messages"][-1]
+
+
+customerManager = CustomerManager()
 
 
 def load_products():
@@ -127,6 +134,12 @@ def set_customer_contact(name: str, cellphone: str) -> str:
     """
     # In a real implementation, this could store the name in a database
     # or session context. Here, we simply return a confirmation message.
+    customerManager.create_customer(
+        CustomerCreate(
+            name=name,
+            cellphone=cellphone,
+        )
+    )
     logging.info(f"Storing customer name: {name} for cellphone: {cellphone}")
     return f"Customer name '{name}' has been stored."
 
@@ -146,7 +159,7 @@ def get_actual_phone_number() -> str:
     return "+55 11 91234-5678"
 
 
-def get_customer_by_phone_number(phone_number: str) -> str | None:
+def get_customer_by_phone_number(phone_number: str) -> Any | None:
     """
     Retrieve the customer's name based on their phone number.
 
@@ -160,9 +173,11 @@ def get_customer_by_phone_number(phone_number: str) -> str | None:
         None: If no customer is found for the given phone number.
     """
 
+    customer = customerManager.get_customer(phone_number)
+    logger.info(f"Retrieved customer for phone number {phone_number}: {customer}")
     # In a real implementation, this could query a database.
     # Here, we return a placeholder name.
-    return "David"
+    return customer
 
 
 deepseek_lc_service = DeepSeekLCService()

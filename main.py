@@ -5,7 +5,7 @@ from fastapi import BackgroundTasks, FastAPI, HTTPException
 from fastapi.concurrency import asynccontextmanager
 from fastapi.middleware.cors import CORSMiddleware
 
-from agent.deepseek_langchain import DeepSeekLCService
+from agent.deepseek_langchain_service import DeepSeekLCService
 from agent.deepseek_models import DeepSeekMessage
 from agent.mcp_client import MCPClient
 from config import settings
@@ -122,8 +122,8 @@ async def webhook_handler(
 ) -> dict[str, str]:
     """Handle incoming webhook messages from Evolution API"""
     try:
-        logger.info(f"Received webhook from instance: {payload.instance}")
-        logger.info(f"Webhook data: {payload.data}")
+        # logger.info(f"Received webhook from instance: {payload.instance}")
+        # logger.info(f"Webhook data: {payload.data}")
 
         # Process webhook in background
         background_tasks.add_task(process_webhook_message, payload)
