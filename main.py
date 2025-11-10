@@ -183,7 +183,7 @@ async def process_webhook_message(payload: WebhookPayload) -> None:
         )
 
         await evolution_client.send_message(send_request)
-        logger.info(f"Response sent to {phone_number}")
+        # logger.info(f"Response sent to {phone_number}")
 
     except Exception as e:
         logger.error(f"Error processing webhook message: {str(e)}")
@@ -194,7 +194,8 @@ async def process_webhook_message(payload: WebhookPayload) -> None:
                 number=str(phone_number), text=f"erro ao acessar o  agente => {str(e)}"
             )
             response = await evolution_client.send_message(send_request)
-            logger.info(f"Error message{response} sent to {phone_number}")
+        # logger.info(f"Error message{response} sent to {phone_number}")
+        return HTTPException(status_code=500, detail=str(e))
 
 
 @app.post("/chat-with-mcp")

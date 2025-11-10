@@ -9,7 +9,7 @@ import pandas as pd
 from langchain.agents import create_agent
 from langchain_deepseek import ChatDeepSeek
 from langgraph.checkpoint.memory import InMemorySaver
-
+from langchain.tools import tool, ToolRuntime
 from config import settings
 from sales.customer_management import CustomerManager
 from sales.customer_schema import CustomerCreate
@@ -19,7 +19,7 @@ from sales.customer_schema import CustomerCreate
 logger = logging.getLogger(__name__)
 model = ChatDeepSeek(
     model="deepseek-chat",
-    temperature=1.5,
+    temperature=0.4,
     max_tokens=None,
     timeout=None,
     max_retries=2,
@@ -63,7 +63,7 @@ class DeepSeekLCService:
             "always ask how can you help the customer.",
         )
 
-    def chat_completion(
+    async def chat_completion(
         self,
         messages,
         session_id,
@@ -93,6 +93,7 @@ class DeepSeekLCService:
 customerManager = CustomerManager()
 
 
+@tool
 def load_products():
     """
     Load the product list from the local Excel file 'produtos.xlsx'.
@@ -121,6 +122,7 @@ def load_products():
     return df
 
 
+@tool
 def set_customer_contact(name: str, cellphone: str) -> str:
     """
     Store the customer's name for personalized interactions.
@@ -144,6 +146,7 @@ def set_customer_contact(name: str, cellphone: str) -> str:
         return f"Error storing customer information: {str(e)}"
 
 
+@tool
 def get_customer_by_phone_number(client_phone: str) -> Any | None:
     """
     Retrieve customer by phone number.

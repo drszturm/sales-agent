@@ -24,8 +24,9 @@ class MCPClient:
                         content=f"<saleto${request.session_id}>\n\n" + msg.content,
                     )
                 )
+
             ds_service = deepseek_lc_service
-            result = ds_service.chat_completion(
+            result = await ds_service.chat_completion(
                 messages=messages,
                 session_id=request.session_id,
                 client_phone=request.session_id,
