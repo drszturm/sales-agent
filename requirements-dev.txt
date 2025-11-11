@@ -1,11 +1,22 @@
-fastapi==0.104.1
-uvicorn==0.24.0
-httpx==0.25.2
-black==25.9.0
-python-dotenv==1.0.0
-websockets==12.0
-redis==5.0.1
-hiredis==2.2.3
-ruff==0.14.2
-isort==7.0.0
+# Development dependencies
 pytest==8.4.2
+pytest-asyncio==0.21.1
+pytest-cov==4.1.0
+pytest-mock==3.12.0
+
+# Code Quality
+ruff==0.14.2
+black==25.9.0
+pylint==4.0.2
+isort==7.0.0
+
+# Type Checking
+mypy==1.13.0
+mypy-extensions==1.1.0
+
+# Testing Utilities
+fakeredis==2.18.1
+respx==0.20.1
+
+# Pre-commit hooks
+pre-commit==3.5.0

@@ -1,20 +1,31 @@
 version: '3.8'
 
 services:
-  evolution-mcp-bridge:
-    build: .
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: sales-agent-app
     ports:
       - "8000:8000"
     environment:
-      - EVOLUTION_API_BASE_URL=${EVOLUTION_API_BASE_URL}
+      - PYTHONUNBUFFERED=1
+      - EVOLUTION_API_BASE_URL=${EVOLUTION_API_BASE_URL:-http://localhost:8080}
       - EVOLUTION_API_KEY=${EVOLUTION_API_KEY}
-      - MCP_SERVER_URL=${MCP_SERVER_URL}
+      - MCP_SERVER_URL=${MCP_SERVER_URL:-http://localhost:8001}
       - MCP_API_KEY=${MCP_API_KEY}
-      - HOST=0.0.0.0
-      - PORT=8000
-      - WEBHOOK_URL=${WEBHOOK_URL}
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
+      - DEEPSEEK_BASE_URL=${DEEPSEEK_BASE_URL:-https://api.deepseek.com/v1}
+      - REDIS_URL=redis://redis:6379
+      - DB_HOST=localhost
+      - DB_NAME=/app/data/sales_agent.db
     volumes:
-      - .:/app
+      - ./data:/app/data
+      - ./logs:/app/logs
+    depends_on:
+      - redis
+    networks:
+      - sales-network
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
@@ -23,11 +34,27 @@ services:
       retries: 3
       start_period: 40s
 
-  # Optional: Include your MCP server if it's also containerized
-  mcp-server:
-    image: your-mcp-server-image:latest
+  redis:
+    image: redis:7-alpine
+    container_name: sales-agent-redis
     ports:
-      - "8001:8000"
-    environment:
-      - MCP_API_KEY=${MCP_API_KEY}
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - sales-network
     restart: unless-stopped
+    command: redis-server --appendonly yes --appendfsync everysec
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  redis_data:
+    driver: local
+
+networks:
+  sales-network:
+    driver: bridge
