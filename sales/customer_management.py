@@ -1,10 +1,12 @@
 import logging
+from typing import Any
 from fastapi import Depends
 from sqlalchemy.orm import Session
 
 from infrastructure.database.database import engine, get_db
 from sales.customer_model import Base
-from sales.customer_schema import CustomerCreate
+from sales.customer_schema import Customer, CustomerCreate
+from sales.customer_model import Customer
 from sales.customers_service import CustomerService
 
 Base.metadata.create_all(bind=engine)
@@ -19,14 +21,27 @@ class CustomerManager:
         self.db: Session = next(db_gen)
 
     def create_customer(self, customer: CustomerCreate, db: Session = Depends(get_db)):
-        service = CustomerService(self.db)
-        return service.create_customer(customer)
+        try:
+            service = CustomerService(self.db)
+            return service.create_customer(customer)
+        except Exception as e:
+            logger.error(f"Error creating customer: {e}")
+            raise
 
     def get_customer(self, cellphone: str, db: Session = Depends(get_db)):
-        service = CustomerService(self.db)
-        logger.info(f"Fetching customer with cellphone: {cellphone}")
-        customer = service.get_customer(cellphone)
-        logger.info(f"Found customer: {customer}")
-        if customer is None:
-            logger.info("Customer not found")
-        return customer
+        try:
+            logger.info(f"Getting customer with cellphone: {cellphone}")
+            service = CustomerService(self.db)
+            customer = service.get_customer(cellphone)
+            logger.info(f"Retrieved customer: {customer}")
+            return customer
+
+            if customer is None:
+                logger.info("Customer not found")
+            return customer
+        except Exception as e:
+            logger.error(f"Error retrieving customer: {e}")
+            raise
+
+    async def get_customers(self, skip: int = 0, limit: int = 100) -> Any:
+        return self.db.query(Customer).offset(skip).limit(limit).all()

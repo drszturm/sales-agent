@@ -2,7 +2,7 @@ import logging
 from typing import Any
 
 from fastapi import BackgroundTasks, FastAPI, HTTPException
-from fastapi.concurrency import asynccontextmanager
+from fastapi.concurrency import asynccontextmanager, run_in_threadpool
 from fastapi.middleware.cors import CORSMiddleware
 
 from agent.deepseek_langchain_service import DeepSeekLCService
@@ -18,6 +18,8 @@ from models import (
     SendMessageRequest,
     WebhookPayload,
 )
+from sales.customer_management import CustomerManager
+from sales.customer_schema import Customer
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -56,6 +58,7 @@ message_service = MessageService()
 deepseek_lc_service = DeepSeekLCService()
 # Store conversation sessions
 conversation_sessions: dict[str, list[MCPMessage]] = {}
+customer_manager = CustomerManager()
 
 
 async def startup_event() -> None:
@@ -116,6 +119,13 @@ async def langchain(
         return {"status": "error", "message": str(e)}
 
 
+@app.get("/customers", response_model=list[Customer])
+async def read_customers(skip: int = 0, limit: int = 100) -> dict[str, str]:
+    customers = await customer_manager.get_customers(skip=skip, limit=limit)
+    print(customers)
+    return customers
+
+
 @app.post("/webhook")
 async def webhook_handler(
     payload: WebhookPayload, background_tasks: BackgroundTasks
@@ -152,30 +162,15 @@ async def process_webhook_message(payload: WebhookPayload) -> None:
 
         # Get or create conversation session
         session_id = f"whatsapp_{phone_number}"
-        if session_id not in conversation_sessions:
-            conversation_sessions[session_id] = []
 
-        # Add user message to session
-        user_message = MCPMessage(role="user", content=message_data["text"])
-        conversation_sessions[session_id].append(user_message)
-
-        # Prepare MCP request
         mcp_request = MCPRequest(
-            messages=conversation_sessions[session_id],
+            messages=[MCPMessage(content=message_data["text"], role="user")],
             session_id=session_id,
             context={"platform": "whatsapp", "phone_number": phone_number},
         )
 
         # Get response from MCP server
         mcp_response = await mcp_client.send_message(mcp_request)
-
-        # Add assistant response to session
-        assistant_message = MCPMessage(role="assistant", content=mcp_response.response)
-        conversation_sessions[session_id].append(assistant_message)
-
-        # Keep only last 10 messages to prevent memory issues
-        if len(conversation_sessions[session_id]) > 10:
-            conversation_sessions[session_id] = conversation_sessions[session_id][-10:]
 
         # Send response back via Evolution API
         send_request = SendMessageRequest(

@@ -39,6 +39,10 @@ class Settings:
     # Cache Strategy Configuration
     CACHE_MAX_ENTRIES = int(os.getenv("CACHE_MAX_ENTRIES", "1000"))
     CACHE_POPULAR_THRESHOLD = int(os.getenv("CACHE_POPULAR_THRESHOLD", "5"))
+    DB_USER = os.getenv("DB_USER", "postgres")
+    DB_PASS = os.getenv("DB_PASS", "ADMIN")
+    DB_HOST = os.getenv("DB_HOST", "localhost")
+    DB_NAME = os.getenv("DB_NAME", "agent")
 
 
 settings = Settings()

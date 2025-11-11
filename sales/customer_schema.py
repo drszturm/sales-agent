@@ -1,4 +1,4 @@
-
+from datetime import date
 from pydantic import BaseModel
 
 
@@ -8,6 +8,8 @@ class CustomerBase(BaseModel):
     email: str | None = None
     address: str | None = None
     notes: str | None = None
+    create_at: date | None = None
+    update_at: date | None = None
 
 
 class CustomerCreate(CustomerBase):
@@ -20,6 +22,8 @@ class CustomerUpdate(BaseModel):
     email: str | None = None
     address: str | None = None
     notes: str | None = None
+    create_at: str | None = None
+    update_at: str | None = None
 
 
 class Customer(CustomerBase):

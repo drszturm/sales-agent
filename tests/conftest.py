@@ -2,15 +2,11 @@
 
 import asyncio
 from unittest.mock import AsyncMock, Mock
-
 import pytest
-import pytest_asyncio
-from evolution_client import EvolutionClient
-from fakeredis import aioredis
+from messaging.evolution_client import EvolutionClient
 from fastapi.testclient import TestClient
-from mcp_client import MCPClient
+from agent.mcp_client import MCPClient
 
-from cache import CacheManager
 from main import app
 
 
@@ -82,22 +78,6 @@ def sample_mcp_response():
         "session_id": "test_session",
         "context": {"platform": "whatsapp"},
     }
-
-
-@pytest_asyncio.fixture
-async def cache_manager():
-    """Cache manager with fake Redis."""
-    manager = CacheManager()
-    manager.redis_client = aioredis.FakeRedis()
-    manager.cache_enabled = True
-    await manager.initialize()
-    return manager
-
-
-@pytest.fixture
-def mock_redis_client():
-    """Mock Redis client."""
-    return Mock(spec=aioredis.FakeRedis)
 
 
 @pytest.fixture(scope="session")

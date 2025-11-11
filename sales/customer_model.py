@@ -1,4 +1,5 @@
-from sqlalchemy import Column, Integer, String, Text
+from datetime import datetime
+from sqlalchemy import Column, Integer, String, Text, Date
 from sqlalchemy.ext.declarative import declarative_base
 
 Base = declarative_base()
@@ -13,3 +14,5 @@ class Customer(Base):
     email = Column(String(100), nullable=True)
     address = Column(Text, nullable=True)
     notes = Column(Text, nullable=True)
+    create_at = Column(Date, nullable=False)
+    update_at = Column(Date, nullable=True)

@@ -1,4 +1,4 @@
-# Evolution API - MCP Bridge
+# Sales Agent
 
 A FastAPI bridge that connects Evolution API with MCP (Model Context Protocol) servers.
 
@@ -8,9 +8,8 @@ A FastAPI bridge that connects Evolution API with MCP (Model Context Protocol) s
 - Process messages through MCP server
 - Send responses back via Evolution API
 - Conversation session management
-- Redis caching for common messages
 - Docker containerization
-- Code quality tools (Ruff, Black, Pylint, MyPy)
+- Code quality tools (Ruff)
 - Comprehensive test coverage with pytest
 - GitHub Actions CI/CD
 

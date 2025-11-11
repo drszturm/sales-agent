@@ -1,3 +1,4 @@
+from datetime import datetime
 import logging
 from typing import Any
 
@@ -31,6 +32,8 @@ class CustomerService:
             email=customer.email,
             address=customer.address,
             notes=customer.notes,
+            create_at=datetime.now(),
+            update_at=datetime.now(),
         )
         logger.info(f"Creating customer: {db_customer}{self.db}")
         self.db.add(db_customer)

@@ -1,9 +1,14 @@
+import logging
 from typing import Any
 
 import httpx
 
 from config import settings
 from models import SendMediaRequest, SendMessageRequest
+
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
 class EvolutionClient:
@@ -32,6 +37,7 @@ class EvolutionClient:
                 response.raise_for_status()
                 return response.json()
         except httpx.HTTPError as e:
+            logger.error(f"Evolution API HTTP error: {str(e)}")
             raise Exception(f"Evolution API HTTP error: {str(e)}") from e
 
     async def send_media(self, request: SendMediaRequest) -> Any:

@@ -34,13 +34,6 @@ jobs:
           ruff check .
         continue-on-error: false
           
-      - name: Run Pylint
-        id: pylint
-        run: |
-          pylint main.py models.py config.py evolution_client.py mcp_client.py cache.py tests/
-        continue-on-error: true
-        
-
       - name: Check code formatting
         if: steps.black.outcome != 'success' || steps.ruff.outcome != 'success'
         run: |
