@@ -2,10 +2,10 @@ import logging
 from typing import Any
 
 from fastapi import BackgroundTasks, FastAPI, HTTPException
-from fastapi.concurrency import asynccontextmanager
+from fastapi.concurrency import asynccontextmanager, run_in_threadpool
 from fastapi.middleware.cors import CORSMiddleware
 
-from agent.deepseek_langchain import DeepSeekLCService
+from agent.deepseek_langchain_service import DeepSeekLCService
 from agent.deepseek_models import DeepSeekMessage
 from agent.mcp_client import MCPClient
 from config import settings
@@ -18,6 +18,8 @@ from models import (
     SendMessageRequest,
     WebhookPayload,
 )
+from sales.customer_management import CustomerManager
+from sales.customer_schema import Customer
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -56,6 +58,7 @@ message_service = MessageService()
 deepseek_lc_service = DeepSeekLCService()
 # Store conversation sessions
 conversation_sessions: dict[str, list[MCPMessage]] = {}
+customer_manager = CustomerManager()
 
 
 async def startup_event() -> None:
@@ -116,14 +119,21 @@ async def langchain(
         return {"status": "error", "message": str(e)}
 
 
+@app.get("/customers", response_model=list[Customer])
+async def read_customers(skip: int = 0, limit: int = 100) -> dict[str, str]:
+    customers = await customer_manager.get_customers(skip=skip, limit=limit)
+    print(customers)
+    return customers
+
+
 @app.post("/webhook")
 async def webhook_handler(
     payload: WebhookPayload, background_tasks: BackgroundTasks
 ) -> dict[str, str]:
     """Handle incoming webhook messages from Evolution API"""
     try:
-        logger.info(f"Received webhook from instance: {payload.instance}")
-        logger.info(f"Webhook data: {payload.data}")
+        # logger.info(f"Received webhook from instance: {payload.instance}")
+        # logger.info(f"Webhook data: {payload.data}")
 
         # Process webhook in background
         background_tasks.add_task(process_webhook_message, payload)
@@ -152,16 +162,9 @@ async def process_webhook_message(payload: WebhookPayload) -> None:
 
         # Get or create conversation session
         session_id = f"whatsapp_{phone_number}"
-        if session_id not in conversation_sessions:
-            conversation_sessions[session_id] = []
 
-        # Add user message to session
-        user_message = MCPMessage(role="user", content=message_data["text"])
-        conversation_sessions[session_id].append(user_message)
-
-        # Prepare MCP request
         mcp_request = MCPRequest(
-            messages=conversation_sessions[session_id],
+            messages=[MCPMessage(content=message_data["text"], role="user")],
             session_id=session_id,
             context={"platform": "whatsapp", "phone_number": phone_number},
         )
@@ -169,21 +172,13 @@ async def process_webhook_message(payload: WebhookPayload) -> None:
         # Get response from MCP server
         mcp_response = await mcp_client.send_message(mcp_request)
 
-        # Add assistant response to session
-        assistant_message = MCPMessage(role="assistant", content=mcp_response.response)
-        conversation_sessions[session_id].append(assistant_message)
-
-        # Keep only last 10 messages to prevent memory issues
-        if len(conversation_sessions[session_id]) > 10:
-            conversation_sessions[session_id] = conversation_sessions[session_id][-10:]
-
         # Send response back via Evolution API
         send_request = SendMessageRequest(
             number=phone_number, text=mcp_response.response
         )
 
         await evolution_client.send_message(send_request)
-        logger.info(f"Response sent to {phone_number}")
+        # logger.info(f"Response sent to {phone_number}")
 
     except Exception as e:
         logger.error(f"Error processing webhook message: {str(e)}")
@@ -194,7 +189,8 @@ async def process_webhook_message(payload: WebhookPayload) -> None:
                 number=str(phone_number), text=f"erro ao acessar o  agente => {str(e)}"
             )
             response = await evolution_client.send_message(send_request)
-            logger.info(f"Error message{response} sent to {phone_number}")
+        # logger.info(f"Error message{response} sent to {phone_number}")
+        return HTTPException(status_code=500, detail=str(e))
 
 
 @app.post("/chat-with-mcp")

@@ -3,20 +3,23 @@
 import getpass
 import logging
 import os
+from typing import Any
 
 import pandas as pd
 from langchain.agents import create_agent
 from langchain_deepseek import ChatDeepSeek
 from langgraph.checkpoint.memory import InMemorySaver
-
+from langchain.tools import tool, ToolRuntime
 from config import settings
+from sales.customer_management import CustomerManager
+from sales.customer_schema import CustomerCreate
 
 # Read entire XLSX file
 
 logger = logging.getLogger(__name__)
 model = ChatDeepSeek(
     model="deepseek-chat",
-    temperature=1.5,
+    temperature=0.4,
     max_tokens=None,
     timeout=None,
     max_retries=2,
@@ -33,8 +36,11 @@ class DeepSeekLCService:
         self.llm = create_agent(
             checkpointer=InMemorySaver(),
             model=model,  # intalled model="claude-sonnet-4-5-20250929",
-            tools=[load_products, set_customer_contact, get_actual_phone_number],
+            tools=[load_products, set_customer_contact, get_customer_by_phone_number],
             system_prompt="You are a helpful supermarket salesman.Be concise and accurate."
+            "You are selling  through whatsapp messages."
+            "client_phone is provided in the user message prefix <client_phone>."
+            "retrieve customer data using the phone number provided in the user message prefix <client_phone>. with the tool get_customer_by_phone_number. using client_phone as argument"
             "if do not know the customer name, Always ask for the customer's name at the beginning of the conversation,"
             "The supermarket is located in Brazil and sells groceries and household items."
             "Never ask for the customer phone number, it is provided in the user message<client_phone>."
@@ -57,7 +63,7 @@ class DeepSeekLCService:
             "always ask how can you help the customer.",
         )
 
-    def chat_completion(
+    async def chat_completion(
         self,
         messages,
         session_id,
@@ -72,7 +78,7 @@ class DeepSeekLCService:
                 "messages": [
                     {
                         "role": message.role,
-                        "content": f"<{session_id}+{client_phone}>" + message.content,
+                        "content": f"<{client_phone}>" + message.content,
                     }
                     for message in messages
                 ]
@@ -80,10 +86,14 @@ class DeepSeekLCService:
             {"configurable": {"thread_id": client_phone}},
         )
         # print(response)
-        print("Response content:", response["messages"][-1])
+        # print("Response content:", response["messages"][-1])
         return response["messages"][-1]
 
 
+customerManager = CustomerManager()
+
+
+@tool
 def load_products():
     """
     Load the product list from the local Excel file 'produtos.xlsx'.
@@ -112,57 +122,51 @@ def load_products():
     return df
 
 
+@tool
 def set_customer_contact(name: str, cellphone: str) -> str:
     """
     Store the customer's name for personalized interactions.
-
-    This function simulates storing the customer's name, which can be used
-    later in conversations to enhance user experience.
-
     Args:
-        name (str): The name of the customer to store.
-
+        name (str): The customer's name
+        cellphone (str): The customer's phone number
     Returns:
-        str: Confirmation message indicating the name has been stored.
+        str: Confirmation message
     """
-    # In a real implementation, this could store the name in a database
-    # or session context. Here, we simply return a confirmation message.
-    logging.info(f"Storing customer name: {name} for cellphone: {cellphone}")
-    return f"Customer name '{name}' has been stored."
+    try:
+        customerManager.create_customer(
+            CustomerCreate(
+                name=name,
+                cellphone=cellphone,
+            )
+        )
+        logger.info(f"Stored customer name: {name} for cellphone: {cellphone}")
+        return f"Customer name '{name}' has been stored."
+    except Exception as e:
+        logger.error(f"Error storing customer: {e}")
+        return f"Error storing customer information: {str(e)}"
 
 
-def get_actual_phone_number() -> str:
+@tool
+def get_customer_by_phone_number(client_phone: str) -> Any | None:
     """
-    Retrieve the actual phone number of the customer.
-
-    This function simulates retrieving the customer's phone number,
-    which can be used for contact or identification purposes.
-
-    Returns:
-        str: The customer's phone number.
-    """
-    # In a real implementation, this could retrieve the phone number from
-    # session context or request metadata. Here, we return a placeholder.
-    return "+55 11 91234-5678"
-
-
-def get_customer_by_phone_number(phone_number: str) -> str | None:
-    """
-    Retrieve the customer's name based on their phone number.
-
-    This function simulates looking up a customer's name using their
-    phone number, which can be useful for personalized interactions.
-
+    Retrieve customer by phone number.
     Args:
-        phone_number (str): The phone number of the customer.
+        phone_number (str): Customer's phone number
     Returns:
-        str: The name of the customer associated with the phone number.
-        None: If no customer is found for the given phone number.
+        Any | None: Customer object or None if not found
     """
+    try:
+        customer = customerManager.get_customer(client_phone)
+        logger.info(f"Retrieved customer: {client_phone} -> {customer}")
+        return customer
+    except Exception as e:
+        logger.error(f"Error retrieving customer: {e}")
+        return None
 
-    # In a real implementation, this could query a database.
-    # Here, we return a placeholder name.
-    return "David"
 
-
-deepseek_lc_service = DeepSeekLCService()
+# Initialize service with proper error handling
+try:
+    deepseek_lc_service = DeepSeekLCService()
+except Exception as e:
+    logger.error(f"Failed to initialize DeepSeek service: {e}")
+    raise
