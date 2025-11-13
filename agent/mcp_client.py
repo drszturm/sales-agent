@@ -46,3 +46,6 @@ class MCPClient:
             # return MCPResponse(response=str(e))
             logger.error(f"MCP Client HTTP error: {str(e)}")
             raise Exception(f"MCP Client HTTP error: {str(e)}") from e
+
+
+mcp_client = MCPClient()

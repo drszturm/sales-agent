@@ -14,7 +14,12 @@ from langgraph.checkpoint.memory import InMemorySaver
 from config import settings
 from sales.customer_management import CustomerManager
 from sales.customer_schema import CustomerCreate
+from langgraph.checkpoint.postgres import PostgresSaver
 
+
+DB_URI = "postgresql://postgres:ADMIN@localhost:5432/postgres?sslmode=disable"
+with PostgresSaver.from_conn_string(DB_URI) as checkpointer:
+    checkpointer.setup()  # auto create tables in PostgresSql
 # Read entire XLSX file
 
 logger = logging.getLogger(__name__)
@@ -35,7 +40,7 @@ class DeepSeekLCService:
     def __init__(self):
         self.api_key = settings.DEEPSEEK_API_KEY
         self.llm = create_agent(
-            checkpointer=InMemorySaver(),
+            checkpointer=checkpointer,
             model=model,  # intalled model="claude-sonnet-4-5-20250929",
             tools=[load_products, set_customer_contact, get_customer_by_phone_number],
             system_prompt="You are a helpful supermarket salesman.Be concise and accurate."

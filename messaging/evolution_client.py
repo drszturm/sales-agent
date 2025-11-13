@@ -20,6 +20,7 @@ class EvolutionClient:
         }
         self.client = httpx.AsyncClient()
 
+    @instrument
     async def send_message(self, request: SendMessageRequest) -> None:
         """Send text message via Evolution API"""
         try:
@@ -35,10 +36,10 @@ class EvolutionClient:
                 json=payload,
                 headers=self.headers,
             )
-
+            await self.client.aclose()
             return
-
         except Exception as e:
+            await self.client.aclose()
             logger.error(f"Evolution API HTTP error: {str(e)}")
             raise Exception(f"Evolution API HTTP error: {str(e)}") from e
 
