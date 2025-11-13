@@ -11,7 +11,7 @@ from agent.deepseek_langchain_service import DeepSeekLCService
 from agent.deepseek_models import DeepSeekMessage
 from agent.mcp_client import MCPClient
 from config import settings
-from messaging.evolution_client import EvolutionClient
+from messaging.evolution_client import evolution_client
 from messaging.message_service import MessageService
 from models import (
     MCPMessage,
@@ -56,7 +56,7 @@ app.add_middleware(
 
 
 # Client instances
-evolution_client = EvolutionClient()
+
 mcp_client = MCPClient()
 message_service = MessageService()
 deepseek_lc_service = DeepSeekLCService()
@@ -154,18 +154,15 @@ async def webhook_handler(
         # logger.info(f"Webhook data: {payload.data}")
 
         # Process webhook in background
-        # background_tasks.add_task(process_webhook_message, payload)
-        logger.info("Enqueuing webhook processing task")
-        job_instance = task_queue.enqueue(process_webhook_message, payload)
-        logger.info("Enqueuied webhook processing task")
-
+        background_tasks.add_task(process_webhook_message, payload)
+        # job_instance =>
+        # task_queue.enqueue(process_webhook_message, payload)
         return {"status": "received"}
     except Exception as e:
         logger.error(f"Error processing webhook: {str(e)}")
         return {"status": "error", "message": str(e)}
 
 
-@instrument
 async def process_webhook_message(payload: WebhookPayload) -> None:
     """Process incoming webhook message and forward to MCP"""
     try:
@@ -199,7 +196,7 @@ async def process_webhook_message(payload: WebhookPayload) -> None:
             number=phone_number, text=mcp_response.response
         )
 
-        await evolution_client.send_message(send_request)
+        task_queue.enqueue(evolution_client.send_message, send_request)
         # logger.info(f"Response sent to {phone_number}")
 
     except Exception as e:

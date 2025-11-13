@@ -1,0 +1,10 @@
+apiVersion: 1
+
+providers:
+  - name: Sales Agent Dashboards
+    orgId: 1
+    folder: Sales Agent
+    type: file
+    disableDeletion: false
+    options:
+      path: /etc/grafana/provisioning/dashboards
