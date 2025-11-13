@@ -36,10 +36,9 @@ class EvolutionClient:
                 json=payload,
                 headers=self.headers,
             )
-            await self.client.aclose()
+
             return
         except Exception as e:
-            await self.client.aclose()
             logger.error(f"Evolution API HTTP error: {str(e)}")
             raise Exception(f"Evolution API HTTP error: {str(e)}") from e
 
