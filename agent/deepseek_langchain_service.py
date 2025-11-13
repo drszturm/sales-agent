@@ -15,12 +15,22 @@ from config import settings
 from sales.customer_management import CustomerManager
 from sales.customer_schema import CustomerCreate
 from langgraph.checkpoint.postgres import PostgresSaver
+from psycopg_pool import ConnectionPool
 
 
-DB_URI = "postgresql://postgres:ADMIN@localhost:5432/postgres?sslmode=disable"
-with PostgresSaver.from_conn_string(DB_URI) as checkpointer:
-    checkpointer.setup()  # auto create tables in PostgresSql
-# Read entire XLSX file
+pool = ConnectionPool(
+    # Example configuration
+    conninfo="postgresql://postgres:ADMIN@localhost:5432/postgres?sslmode=disable",
+    max_size=20,
+)
+
+# Uses the pickle module for serialization
+# Make sure that you're only de-serializing trusted data
+# (e.g., payloads that you have serialized yourself).
+# Or implement a custom serializer.
+
+checkpointer = PostgresSaver(conn=pool)
+
 
 logger = logging.getLogger(__name__)
 model = ChatDeepSeek(
