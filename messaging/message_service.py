@@ -3,6 +3,7 @@ from typing import Any
 
 from messaging.evolution_client import evolution_client
 from models import SendMessageRequest
+from shared.metrics import instrument
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -13,11 +14,13 @@ class MessageService:
         self.wpp_client = evolution_client
         self.instagram_client = None
 
+    @instrument
     async def send_message(self, request: SendMessageRequest) -> Any:
         """Send text message via EvolutionClient"""
         return await self.wpp_client.send_message(request)
 
     @staticmethod
+    @instrument
     def extract_message_data(webhook_data: dict[str, Any]) -> dict[str, Any]:
         """Extract message data from Evolution API webhook payload"""
         try:

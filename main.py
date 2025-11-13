@@ -2,14 +2,16 @@ import logging
 from typing import Any
 
 from fastapi import BackgroundTasks, FastAPI, HTTPException
-from fastapi.concurrency import asynccontextmanager, run_in_threadpool
+from fastapi.concurrency import asynccontextmanager
 from fastapi.middleware.cors import CORSMiddleware
+from redis import Redis
+from rq import Queue
 
 from agent.deepseek_langchain_service import DeepSeekLCService
 from agent.deepseek_models import DeepSeekMessage
-from agent.mcp_client import MCPClient
+from agent.mcp_client import mcp_client
 from config import settings
-from messaging.evolution_client import EvolutionClient
+from messaging.evolution_client import evolution_client
 from messaging.message_service import MessageService
 from models import (
     MCPMessage,
@@ -20,6 +22,7 @@ from models import (
 )
 from sales.customer_management import CustomerManager
 from sales.customer_schema import Customer
+from shared.metrics import instrument, metrics_endpoint
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -51,14 +54,29 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 # Client instances
-evolution_client = EvolutionClient()
-mcp_client = MCPClient()
+
+mcp_client = mcp_client
 message_service = MessageService()
 deepseek_lc_service = DeepSeekLCService()
 # Store conversation sessions
 conversation_sessions: dict[str, list[MCPMessage]] = {}
 customer_manager = CustomerManager()
+# Create a Redis connection
+redis_conn = Redis(host="localhost", port=6379)
+# from rq_dashboard_fast import RedisQueueDashboard
+
+# dashboard = RedisQueueDashboard("redis://redis:6379/", "/rq")
+
+
+# app.mount("/rq", dashboard)
+# Create a queue object with the connection
+task_queue = Queue(connection=redis_conn)
+
+
+# Prometheus metrics endpoint
+app.add_api_route("/metrics", metrics_endpoint, methods=["GET"])
 
 
 async def startup_event() -> None:
@@ -136,8 +154,9 @@ async def webhook_handler(
         # logger.info(f"Webhook data: {payload.data}")
 
         # Process webhook in background
-        background_tasks.add_task(process_webhook_message, payload)
-
+        # background_tasks.add_task(process_webhook_message, payload)
+        # job_instance =>
+        task_queue.enqueue(process_webhook_message, payload)
         return {"status": "received"}
     except Exception as e:
         logger.error(f"Error processing webhook: {str(e)}")
@@ -189,7 +208,7 @@ async def process_webhook_message(payload: WebhookPayload) -> None:
                 number=str(phone_number), text=f"erro ao acessar o  agente => {str(e)}"
             )
             response = await evolution_client.send_message(send_request)
-        # logger.info(f"Error message{response} sent to {phone_number}")
+            logger.error(f"message{response} sent to {phone_number}")
         return HTTPException(status_code=500, detail=str(e))
 
 

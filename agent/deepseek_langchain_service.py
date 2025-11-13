@@ -7,14 +7,30 @@ from typing import Any
 
 import pandas as pd
 from langchain.agents import create_agent
+from langchain.tools import tool
 from langchain_deepseek import ChatDeepSeek
 from langgraph.checkpoint.memory import InMemorySaver
-from langchain.tools import tool, ToolRuntime
+
 from config import settings
 from sales.customer_management import CustomerManager
 from sales.customer_schema import CustomerCreate
+from langgraph.checkpoint.postgres import PostgresSaver
+from psycopg_pool import ConnectionPool
 
-# Read entire XLSX file
+
+pool = ConnectionPool(
+    # Example configuration"postgresql://{settings.DB_USER}:{settings.DB_PASS}@{settings.DB_HOST}:5432/{settings.DB_NAME}"
+    conninfo="postgresql://postgres:ADMIN@localhost:5432/postgres?sslmode=disable",
+    max_size=20,
+)
+
+# Uses the pickle module for serialization
+# Make sure that you're only de-serializing trusted data
+# (e.g., payloads that you have serialized yourself).
+# Or implement a custom serializer.
+
+checkpointer = PostgresSaver(conn=pool)
+
 
 logger = logging.getLogger(__name__)
 model = ChatDeepSeek(
@@ -34,7 +50,7 @@ class DeepSeekLCService:
     def __init__(self):
         self.api_key = settings.DEEPSEEK_API_KEY
         self.llm = create_agent(
-            checkpointer=InMemorySaver(),
+            checkpointer=checkpointer,
             model=model,  # intalled model="claude-sonnet-4-5-20250929",
             tools=[load_products, set_customer_contact, get_customer_by_phone_number],
             system_prompt="You are a helpful supermarket salesman.Be concise and accurate."

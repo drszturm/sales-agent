@@ -1,13 +1,14 @@
 import logging
 from typing import Any
+
 from fastapi import Depends
 from sqlalchemy.orm import Session
 
 from infrastructure.database.database import engine, get_db
 from sales.customer_model import Base
 from sales.customer_schema import Customer, CustomerCreate
-from sales.customer_model import Customer
 from sales.customers_service import CustomerService
+from shared.metrics import instrument
 
 Base.metadata.create_all(bind=engine)
 # Configure logging
@@ -20,6 +21,7 @@ class CustomerManager:
         db_gen = get_db()
         self.db: Session = next(db_gen)
 
+    @instrument
     def create_customer(self, customer: CustomerCreate, db: Session = Depends(get_db)):
         try:
             service = CustomerService(self.db)
@@ -28,6 +30,7 @@ class CustomerManager:
             logger.error(f"Error creating customer: {e}")
             raise
 
+    @instrument
     def get_customer(self, cellphone: str, db: Session = Depends(get_db)):
         try:
             logger.info(f"Getting customer with cellphone: {cellphone}")
@@ -43,5 +46,6 @@ class CustomerManager:
             logger.error(f"Error retrieving customer: {e}")
             raise
 
+    @instrument
     async def get_customers(self, skip: int = 0, limit: int = 100) -> Any:
         return self.db.query(Customer).offset(skip).limit(limit).all()

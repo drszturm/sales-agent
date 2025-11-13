@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from infrastructure.database.database import engine, get_db
+from shared.metrics import instrument
 
 # Create tables
 Base.metadata.create_all(bind=engine)
@@ -13,18 +14,21 @@ router = APIRouter(prefix="/customers", tags=["customers"])
 
 
 @router.post("/", response_model=Customer, status_code=status.HTTP_201_CREATED)
+@instrument
 def create_customer(customer: CustomerCreate, db: Session = Depends(get_db)):
     service = CustomerService(db)
     return service.create_customer(customer)
 
 
 @router.get("/", response_model=list[Customer])
+@instrument
 def read_customers(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     service = CustomerService(db)
     return service.get_customers(skip=skip, limit=limit)
 
 
 @router.get("/{customer_id}", response_model=Customer)
+@instrument
 def read_customer(customer_id: int, db: Session = Depends(get_db)):
     service = CustomerService(db)
     customer = service.get_customer_by_id(customer_id)
@@ -34,6 +38,7 @@ def read_customer(customer_id: int, db: Session = Depends(get_db)):
 
 
 @router.put("/{customer_id}", response_model=Customer)
+@instrument
 def update_customer(
     customer_id: int, customer: CustomerUpdate, db: Session = Depends(get_db)
 ):
@@ -45,6 +50,7 @@ def update_customer(
 
 
 @router.delete("/{customer_id}", status_code=status.HTTP_204_NO_CONTENT)
+@instrument
 def delete_customer(customer_id: int, db: Session = Depends(get_db)):
     service = CustomerService(db)
     success = service.delete_customer(customer_id)
