@@ -19,8 +19,8 @@ from psycopg_pool import ConnectionPool
 
 
 pool = ConnectionPool(
-    # Example configuration
-    conninfo="postgresql://postgres:ADMIN@localhost:5432/postgres?sslmode=disable",
+    # Example configuration"postgresql://{settings.DB_USER}:{settings.DB_PASS}@{settings.DB_HOST}:5432/{settings.DB_NAME}"
+    conninfo="postgresql://{settings.DB_USER}:{settings.DB_PASS}@{settings.DB_HOST}:5432/postgres?sslmode=disable",
     max_size=20,
 )
 
