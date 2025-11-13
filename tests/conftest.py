@@ -1,13 +1,14 @@
 """Pytest configuration and fixtures."""
 
 import asyncio
-from unittest.mock import AsyncMock, Mock
-import pytest
-from messaging.evolution_client import EvolutionClient
-from fastapi.testclient import TestClient
-from agent.mcp_client import MCPClient
+from unittest.mock import AsyncMock
 
+import pytest
+from fastapi.testclient import TestClient
+
+from agent.mcp_client import MCPClient
 from main import app
+from messaging.evolution_client import EvolutionClient
 
 
 @pytest.fixture

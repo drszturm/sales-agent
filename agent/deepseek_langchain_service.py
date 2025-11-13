@@ -7,9 +7,10 @@ from typing import Any
 
 import pandas as pd
 from langchain.agents import create_agent
+from langchain.tools import tool
 from langchain_deepseek import ChatDeepSeek
 from langgraph.checkpoint.memory import InMemorySaver
-from langchain.tools import tool, ToolRuntime
+
 from config import settings
 from sales.customer_management import CustomerManager
 from sales.customer_schema import CustomerCreate

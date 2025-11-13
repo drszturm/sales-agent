@@ -1,8 +1,12 @@
+import logging
+
 from agent.deepseek_langchain_service import deepseek_lc_service
 from agent.deepseek_models import DeepSeekMessage
 from agent.mcp_models import CallToolResult, ContentType, TextContent
 from config import settings
 from models import MCPRequest, MCPResponse
+
+logger = logging.getLogger(__name__)
 
 
 class MCPClient:
@@ -40,4 +44,5 @@ class MCPClient:
 
         except Exception as e:
             # return MCPResponse(response=str(e))
+            logger.error(f"MCP Client HTTP error: {str(e)}")
             raise Exception(f"MCP Client HTTP error: {str(e)}") from e

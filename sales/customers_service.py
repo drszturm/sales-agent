@@ -1,11 +1,12 @@
-from datetime import datetime
 import logging
+from datetime import datetime
 from typing import Any
 
 from sqlalchemy.orm import Session
 
 from sales.customer_model import Customer
 from sales.customer_schema import CustomerCreate, CustomerUpdate
+from shared.metrics import instrument
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -19,9 +20,11 @@ class CustomerService:
     def get_customer(self, cellphone: str) -> Any:
         return self.db.query(Customer).filter(Customer.cellphone == cellphone).first()
 
+    @instrument
     def get_customer_by_id(self, id: int) -> Any:
         return self.db.query(Customer).filter(Customer.id == id).first()
 
+    @instrument
     def get_customers(self, skip: int = 0, limit: int = 100) -> Any:
         return self.db.query(Customer).offset(skip).limit(limit).all()
 
@@ -41,6 +44,7 @@ class CustomerService:
         self.db.refresh(db_customer)
         return db_customer
 
+    @instrument
     def update_customer(
         self, customer_id: str, customer: CustomerUpdate
     ) -> Customer | None:
@@ -53,6 +57,7 @@ class CustomerService:
             self.db.refresh(db_customer)
         return db_customer
 
+    @instrument
     def delete_customer(self, customer_id: str) -> bool:
         db_customer = self.get_customer(customer_id)
         if db_customer:
