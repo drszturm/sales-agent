@@ -37,7 +37,7 @@ class Settings:
     CACHE_ENABLED = os.getenv("CACHE_ENABLED", "true").lower() == "true"
     CACHE_TTL = int(os.getenv("CACHE_TTL", "3600"))  # 1 hour default
     CACHE_PREFIX = os.getenv("CACHE_PREFIX", "evolution_mcp")
-
+    ADMIN_PHONE = os.getenv("ADMIN_PHONE", "")
     # Cache Strategy Configuration
     CACHE_MAX_ENTRIES = int(os.getenv("CACHE_MAX_ENTRIES", "1000"))
     CACHE_POPULAR_THRESHOLD = int(os.getenv("CACHE_POPULAR_THRESHOLD", "5"))

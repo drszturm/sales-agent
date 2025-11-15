@@ -98,6 +98,7 @@ class DeepSeekLCService:
             return response["messages"][-1].content
         except Exception as e:
             logger.error(f"DeepSeekLCService chat_completion error: {str(e)}")
+            return None
             raise
 
 

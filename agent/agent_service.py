@@ -46,10 +46,10 @@ class AgentService:
                 stream,
                 prompt,
             )
-            logger.info("agent_service response GEMINI", response)
-            return response
-        except Exception as e:
-            logger.error(f"AgentService chat_completion error at GEMINI: {str(e)}")
+            if response is not None:
+                logger.info("GEMINI response")
+                return response
+
             response = await self.deepseek.chat_completion(
                 messages,
                 session_id,
@@ -57,8 +57,19 @@ class AgentService:
                 stream,
                 prompt,
             )
-            logger.info("agent_service response DEEPSEEK", response)
-            return response
+            if response is not None:
+                logger.info("DEEPSEEK response")
+                return response
+            else:
+                logger.error(
+                    f"AgentSerice::response failed for{client_phone}|session:{session_id}"
+                )
+                return None
+        except Exception as e:
+            logger.error(
+                f"AgentService::chat_completion error for{client_phone}|session:{session_id} :with error => {str(e)}"
+            )
+            return None
 
 
 # Initialize service with proper error handling

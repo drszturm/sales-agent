@@ -137,9 +137,9 @@ async def webhook_handler(
         # logger.info(f"Webhook data: {payload.data}")
 
         # Process webhook in background
-        background_tasks.add_task(process_webhook_message, payload)
+        # background_tasks.add_task(process_webhook_message, payload)
         # job_instance =>
-        # task_queue.enqueue(process_webhook_message, payload)
+        task_queue.enqueue(process_webhook_message, payload)
         return {"status": "received"}
     except Exception as e:
         logger.error(f"Error processing webhook: {str(e)}")
@@ -172,23 +172,35 @@ async def process_webhook_message(payload: WebhookPayload) -> None:
         )
         logger.info(f"MCP Request: {mcp_request}")
         # Get response from MCP server
-        mcp_response = await mcp_client.send_message(mcp_request)
+        mcp_response = None
+        attempts = 3
+        for attempt in range(attempts):
+            logger.debug("try number ${attempt} to call mcp server")
+            mcp_response = await mcp_client.send_message(mcp_request)
+            if mcp_response is None:
+                break
+        if mcp_response is not None:
+            # Send response back via Evolution API
+            send_request = SendMessageRequest(
+                number=phone_number, text=mcp_response.response
+            )
 
-        # Send response back via Evolution API
-        send_request = SendMessageRequest(
-            number=phone_number, text=mcp_response.response
-        )
-
-        await evolution_client.send_message(send_request)
-        # logger.info(f"Response sent to {phone_number}")
+            await evolution_client.send_message(send_request)
+            # logger.info(f"Response sent to {phone_number}")
 
     except Exception as e:
         logger.error(f"Error processing webhook message: {str(e)}")
-        phone_number = message_data.get("from") if message_data is not None else None
+        if message_data is not None:
+            phone_number = (
+                message_data.get("from") if message_data is not None else None
+            )
+        else:
+            phone_number = ""
         logger.info(f"phone_number: {phone_number}")
         if phone_number:
             send_request = SendMessageRequest(
-                number=str(phone_number), text=f"erro ao acessar o  agente => {str(e)}"
+                number=str(settings.ADMIN_PHONE),
+                text=f"erro ao acessar o  agente for {phone_number} => {str(e)}",
             )
             response = await evolution_client.send_message(send_request)
             logger.error(f"message{response} sent to {phone_number}")

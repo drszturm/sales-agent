@@ -98,6 +98,7 @@ class GoogleLCService:
             # print("Response content:", response["messages"][-1])
             return response["messages"][-1].content[0]["text"]
         except Exception as e:
+            return None
             logger.error(f"GoogleLCService chat_completion error: {str(e)}")
             raise
 
