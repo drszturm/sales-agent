@@ -46,15 +46,24 @@ class AgentService:
                 stream,
                 prompt,
             )
+            logger.info("agent_service response GEMINI", response)
             return response
         except Exception as e:
-            logger.error(f"AgentService chat_completion error: {str(e)}")
-            return None
+            logger.error(f"AgentService chat_completion error at GEMINI: {str(e)}")
+            response = await self.deepseek.chat_completion(
+                messages,
+                session_id,
+                client_phone,
+                stream,
+                prompt,
+            )
+            logger.info("agent_service response DEEPSEEK", response)
+            return response
 
 
 # Initialize service with proper error handling
 try:
     agent_service = AgentService()
 except Exception as e:
-    logger.error(f"Failed to initialize DeepSeek service: {e}")
+    logger.error(f"Failed to initialize agent service: {e}")
     raise

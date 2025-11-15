@@ -137,9 +137,9 @@ async def webhook_handler(
         # logger.info(f"Webhook data: {payload.data}")
 
         # Process webhook in background
-        # background_tasks.add_task(process_webhook_message, payload)
+        background_tasks.add_task(process_webhook_message, payload)
         # job_instance =>
-        task_queue.enqueue(process_webhook_message, payload)
+        # task_queue.enqueue(process_webhook_message, payload)
         return {"status": "received"}
     except Exception as e:
         logger.error(f"Error processing webhook: {str(e)}")
@@ -170,7 +170,7 @@ async def process_webhook_message(payload: WebhookPayload) -> None:
             session_id=session_id,
             context={"platform": "whatsapp", "phone_number": phone_number},
         )
-
+        logger.info(f"MCP Request: {mcp_request}")
         # Get response from MCP server
         mcp_response = await mcp_client.send_message(mcp_request)
 

@@ -80,21 +80,25 @@ class DeepSeekLCService:
     ):
         # print("Invoking DeepSeek LLM via LangChain...")
         # print("Messages:", messages)
-        response = self.llm.invoke(
-            {
-                "messages": [
-                    {
-                        "role": message.role,
-                        "content": f"<{client_phone}>" + message.content,
-                    }
-                    for message in messages
-                ]
-            },
-            {"configurable": {"thread_id": client_phone}},
-        )
-        # print(response)
-        # print("Response content:", response["messages"][-1])
-        return response["messages"][-1]
+        try:
+            response = self.llm.invoke(
+                {
+                    "messages": [
+                        {
+                            "role": message.role,
+                            "content": f"<{client_phone}>" + message.content,
+                        }
+                        for message in messages
+                    ]
+                },
+                {"configurable": {"thread_id": client_phone}},
+            )
+            # print(response)
+            # print("Response content:", response["messages"][-1])
+            return response["messages"][-1].content
+        except Exception as e:
+            logger.error(f"DeepSeekLCService chat_completion error: {str(e)}")
+            raise
 
 
 customerManager = CustomerManager()

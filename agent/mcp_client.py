@@ -35,11 +35,9 @@ class MCPClient:
                 client_phone=request.session_id,
             )
 
-            CallToolResult(
-                content=[TextContent(type=ContentType.TEXT, text=result.content)]
-            )
+            CallToolResult(content=[TextContent(type=ContentType.TEXT, text=result)])
 
-            return MCPResponse(response=result.content)
+            return MCPResponse(response=result)
 
         except Exception as e:
             # return MCPResponse(response=str(e))
