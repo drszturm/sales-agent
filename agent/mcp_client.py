@@ -1,6 +1,6 @@
 import logging
 
-from agent.deepseek_langchain_service import deepseek_lc_service
+from agent.agent_service import agent_service
 from agent.deepseek_models import DeepSeekMessage
 from agent.mcp_models import CallToolResult, ContentType, TextContent
 from config import settings
@@ -29,8 +29,7 @@ class MCPClient:
                     )
                 )
 
-            ds_service = deepseek_lc_service
-            result = await ds_service.chat_completion(
+            result = await agent_service.chat_completion(
                 messages=messages,
                 session_id=request.session_id,
                 client_phone=request.session_id,

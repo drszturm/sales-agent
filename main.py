@@ -7,8 +7,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from redis import Redis
 from rq import Queue
 
-from agent.deepseek_langchain_service import DeepSeekLCService
-from agent.deepseek_models import DeepSeekMessage
 from agent.mcp_client import mcp_client
 from config import settings
 from messaging.evolution_client import evolution_client
@@ -22,7 +20,7 @@ from models import (
 )
 from sales.customer_management import CustomerManager
 from sales.customer_schema import Customer
-from shared.metrics import instrument, metrics_endpoint
+from shared.metrics import metrics_endpoint
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -59,7 +57,7 @@ app.add_middleware(
 
 mcp_client = mcp_client
 message_service = MessageService()
-deepseek_lc_service = DeepSeekLCService()
+
 # Store conversation sessions
 conversation_sessions: dict[str, list[MCPMessage]] = {}
 customer_manager = CustomerManager()
@@ -120,21 +118,6 @@ async def send_media(request: SendMediaRequest):
     except Exception as e:
         logger.error(f"Error sending media: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
-
-
-@app.post("/lang")
-async def langchain(
-    messages: list[DeepSeekMessage],  # , background_tasks: BackgroundTasks
-) -> dict[str, Any]:
-    try:
-        logger.info(f"data: {messages}")
-
-        response = deepseek_lc_service.chat_completion(messages, 1, "5562993434010")
-
-        return {"status": "success", "message": str(response)}
-    except Exception as e:
-        logger.error(f"Error processing webhook: {str(e)}")
-        return {"status": "error", "message": str(e)}
 
 
 @app.get("/customers", response_model=list[Customer])

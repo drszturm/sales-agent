@@ -8,7 +8,7 @@ from typing import Any
 import pandas as pd
 from langchain.agents import create_agent
 from langchain.tools import tool
-from langchain_deepseek import ChatDeepSeek
+from langchain_google_genai import ChatGoogleGenerativeAI
 from langgraph.checkpoint.postgres import PostgresSaver
 from psycopg_pool import ConnectionPool
 
@@ -22,27 +22,28 @@ from sales.customer_schema import CustomerCreate
 # Or implement a custom serializer.
 
 
+if not os.getenv("GEMINI_API_KEY"):
+    os.environ["GEMINI_API_KEY"] = getpass.getpass("Enter your GEMINI API key: ")
 logger = logging.getLogger(__name__)
-model = ChatDeepSeek(
-    model="deepseek-chat",
-    temperature=0.4,
-    max_tokens=None,
-    timeout=None,
-    max_retries=2,
-    # other params...
-)
-
-if not os.getenv("DEEPSEEK_API_KEY"):
-    os.environ["DEEPSEEK_API_KEY"] = getpass.getpass("Enter your DeepSeek API key: ")
 
 
-class DeepSeekLCService:
+class GoogleLCService:
     def __init__(self, connection_pool: ConnectionPool):
-        self.api_key = settings.DEEPSEEK_API_KEY
+        self.api_key = settings.GEMINI_API_KEY
         self.checkpointer = PostgresSaver(conn=connection_pool)
+
+        self.model = ChatGoogleGenerativeAI(
+            model="gemini-2.5-flash",
+            temperature=0.4,
+            max_tokens=None,
+            timeout=None,
+            max_retries=2,
+            # other params...
+        )
+
         self.llm = create_agent(
             checkpointer=self.checkpointer,
-            model=model,  # intalled model="claude-sonnet-4-5-20250929",
+            model=self.model,  # intalled model="claude-sonnet-4-5-20250929",
             tools=[load_products, set_customer_contact, get_customer_by_phone_number],
             system_prompt="You are a helpful supermarket salesman.Be concise and accurate."
             "You are selling  through whatsapp messages."

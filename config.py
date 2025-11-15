@@ -30,6 +30,8 @@ class Settings:
     DEEPSEEK_BASE_URL = os.getenv("DEEPSEEK_BASE_URL", "https://api.deepseek.com/v1")
 
     DEEPSEEK_MODEL = "deepseek-chat"
+    GEMINI_MODEL = "gemini-2.5-flash"
+    GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
     # Redis Cache Configuration
     REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379")
     CACHE_ENABLED = os.getenv("CACHE_ENABLED", "true").lower() == "true"
