@@ -2,6 +2,7 @@
 import logging
 
 import httpx
+from agent.claude_langchain import ClaudeLCService
 from psycopg_pool import ConnectionPool
 from langgraph.checkpoint.postgres import PostgresSaver
 
@@ -34,6 +35,7 @@ class AgentService:
         self.client = httpx.AsyncClient()
         self.gemini = GoogleLCService(checkpointer)
         self.deepseek = DeepSeekLCService(checkpointer)
+        self.claude = ClaudeLCService(checkpointer)
         self.chatgpt = None  # Placeholder for ChatGPT service if needed
 
     async def chat_completion(
@@ -54,6 +56,18 @@ class AgentService:
             )
             if response is not None:
                 logger.info("GEMINI response")
+                logger.info(response)
+                return response
+
+            response = await self.claude.chat_completion(
+                messages,
+                session_id,
+                client_phone,
+                stream,
+                prompt,
+            )
+            if response is not None:
+                logger.info("CLAUDE response")
                 logger.info(response)
                 return response
 
