@@ -7,10 +7,10 @@ from langgraph.checkpoint.postgres import PostgresSaver
 
 from agent.deepseek_langchain_service import DeepSeekLCService
 from agent.gemini_langchain import GoogleLCService
+from config import settings
 
 connection_pool = ConnectionPool(
-    # Example configuration"postgresql://{settings.DB_USER}:{settings.DB_PASS}@{settings.DB_HOST}:5432/{settings.DB_NAME}"
-    conninfo="postgresql://postgres:ADMIN@localhost:5432/postgres?sslmode=disable",
+    conninfo=f"postgresql://{settings.DB_USER}:{settings.DB_PASS}@{settings.DB_HOST}:5432/{settings.DB_NAME}?sslmode=disable",
     max_size=20,
     kwargs={"autocommit": True},
 )
