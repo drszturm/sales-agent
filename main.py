@@ -149,6 +149,15 @@ async def webhook_handler(
 async def process_webhook_message(payload: WebhookPayload) -> None:
     """Process incoming webhook message and forward to MCP"""
     try:
+        await agent_interaction(payload)
+
+    except Exception as e:
+        logger.error(f"Error processing webhook message: {str(e)}")
+
+
+async def agent_interaction(payload: WebhookPayload) -> None:
+    """Process incoming webhook message and forward to MCP"""
+    try:
         # Extract message data from webhook payload
         message_data = message_service.extract_message_data(payload.data)
 
@@ -189,21 +198,12 @@ async def process_webhook_message(payload: WebhookPayload) -> None:
 
     except Exception as e:
         logger.error(f"Error processing webhook message: {str(e)}")
-        if message_data is not None:
-            phone_number = (
-                message_data.get("from") if message_data is not None else None
-            )
-        else:
-            phone_number = ""
-        logger.info(f"phone_number: {phone_number}")
-        if phone_number:
-            send_request = SendMessageRequest(
-                number=str(settings.ADMIN_PHONE),
-                text=f"erro ao acessar o  agente for {phone_number} => {str(e)}",
-            )
-            response = await evolution_client.send_message(send_request)
-            logger.error(f"message{response} sent to {phone_number}")
-        return HTTPException(status_code=500, detail=str(e))
+
+        send_request = SendMessageRequest(
+            number=str(settings.ADMIN_PHONE),
+            text=f"erro ao acessar o  agente for {payload} => {str(e)}",
+        )
+        await evolution_client.send_message(send_request)
 
 
 @app.post("/chat-with-mcp")
