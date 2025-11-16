@@ -78,8 +78,6 @@ class DeepSeekLCService:
         stream=False,
         prompt="",
     ):
-        # print("Invoking DeepSeek LLM via LangChain...")
-        # print("Messages:", messages)
         try:
             response = self.llm.invoke(
                 {
@@ -93,8 +91,7 @@ class DeepSeekLCService:
                 },
                 {"configurable": {"thread_id": client_phone}},
             )
-            # print(response)
-            # print("Response content:", response["messages"][-1])
+
             return response["messages"][-1].content
         except Exception as e:
             logger.error(f"DeepSeekLCService chat_completion error: {str(e)}")
