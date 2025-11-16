@@ -14,7 +14,7 @@ connection_pool = ConnectionPool(
     max_size=20,
 )
 checkpointer = PostgresSaver(conn=connection_pool)
-checkpointer.setup()
+
 # Uses the pickle module for serialization
 # Make sure that you're only de-serializing trusted data
 # (e.g., payloads that you have serialized yourself).
@@ -27,6 +27,7 @@ logger = logging.getLogger(__name__)
 
 class AgentService:
     def __init__(self):
+        checkpointer.setup()
         self.client = httpx.AsyncClient()
         self.gemini = GoogleLCService(checkpointer)
         self.deepseek = DeepSeekLCService(checkpointer)
