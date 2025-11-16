@@ -12,7 +12,10 @@ connection_pool = ConnectionPool(
     # Example configuration"postgresql://{settings.DB_USER}:{settings.DB_PASS}@{settings.DB_HOST}:5432/{settings.DB_NAME}"
     conninfo="postgresql://postgres:ADMIN@localhost:5432/postgres?sslmode=disable",
     max_size=20,
+    kwargs={"autocommit": True},
 )
+
+
 checkpointer = PostgresSaver(conn=connection_pool)
 
 # Uses the pickle module for serialization
