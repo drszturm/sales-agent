@@ -31,7 +31,7 @@ class GoogleLCService:
     def __init__(self, connection_pool: ConnectionPool):
         self.api_key = settings.GEMINI_API_KEY
         self.checkpointer = PostgresSaver(conn=connection_pool)
-
+        self.checkpointer.setup()
         self.model = ChatGoogleGenerativeAI(
             model="gemini-2.5-flash",
             temperature=0.4,
@@ -95,13 +95,18 @@ class GoogleLCService:
                 },
                 {"configurable": {"thread_id": client_phone}},
             )
-            # print(response)
+            # result = [resp["text"] for resp in response["messages"][-1].content]
+            logger.info(response["messages"][-1].content[0])
             # print("Response content:", response["messages"][-1])
-            return response["messages"][-1].content[0]["text"]
+            agent_response = (
+                response["messages"][-1].content
+                if isinstance(response["messages"][-1].content, str)
+                else response["messages"][-1].content[0]["text"]
+            )
+            return agent_response
         except Exception as e:
-            return None
             logger.error(f"GoogleLCService chat_completion error: {str(e)}")
-            raise
+            return None
 
 
 customerManager = CustomerManager()
