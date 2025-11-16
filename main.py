@@ -170,23 +170,22 @@ async def process_webhook_message(payload: WebhookPayload) -> None:
             session_id=session_id,
             context={"platform": "whatsapp", "phone_number": phone_number},
         )
-        logger.info(f"MCP Request: {mcp_request}")
+        logger.debug(f"MCP Request: {mcp_request}")
         # Get response from MCP server
         mcp_response = None
         attempts = 3
         for attempt in range(attempts):
             logger.debug("try number ${attempt} to call mcp server")
+            attempt = attempt + 1
             mcp_response = await mcp_client.send_message(mcp_request)
-            if mcp_response is None:
-                break
-        if mcp_response is not None:
-            # Send response back via Evolution API
-            send_request = SendMessageRequest(
-                number=phone_number, text=mcp_response.response
-            )
+            if mcp_response is not None:
+                # Send response back via Evolution API
+                send_request = SendMessageRequest(
+                    number=phone_number, text=mcp_response.response
+                )
 
-            await evolution_client.send_message(send_request)
-            # logger.info(f"Response sent to {phone_number}")
+                await evolution_client.send_message(send_request)
+                return
 
     except Exception as e:
         logger.error(f"Error processing webhook message: {str(e)}")

@@ -78,8 +78,6 @@ class GoogleLCService:
         stream=False,
         prompt="",
     ):
-        # print("Invoking DeepSeek LLM via LangChain...")
-        # print("Messages:", messages)
         try:
             response = self.llm.invoke(
                 {
@@ -93,9 +91,7 @@ class GoogleLCService:
                 },
                 {"configurable": {"thread_id": client_phone}},
             )
-            # result = [resp["text"] for resp in response["messages"][-1].content]
 
-            # print("Response content:", response["messages"][-1])
             agent_response = (
                 response["messages"][-1].content
                 if isinstance(response["messages"][-1].content, str)
