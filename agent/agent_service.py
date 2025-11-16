@@ -54,6 +54,7 @@ class AgentService:
             )
             if response is not None:
                 logger.info("GEMINI response")
+                logger.info(response)
                 return response
 
             response = await self.deepseek.chat_completion(
@@ -65,6 +66,7 @@ class AgentService:
             )
             if response is not None:
                 logger.info("DEEPSEEK response")
+                logger.info(response)
                 return response
             else:
                 logger.error(

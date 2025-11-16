@@ -99,9 +99,14 @@ class GoogleLCService:
             agent_response = (
                 response["messages"][-1].content
                 if isinstance(response["messages"][-1].content, str)
-                else response["messages"][-1].content[0]["text"]
+                else "\n".join(
+                    [
+                        str(response["text"])
+                        for response in response["messages"][-1].content
+                    ]
+                )
             )
-            logger.info(agent_response)
+
             return agent_response
         except Exception as e:
             logger.error(f"GoogleLCService chat_completion error: {str(e)}")
