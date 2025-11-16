@@ -17,7 +17,7 @@ class MCPClient:
             "Content-Type": "application/json",
         }
 
-    async def send_message(self, request: MCPRequest) -> MCPResponse:
+    async def send_message(self, request: MCPRequest) -> MCPResponse | None:
         """Send message to MCP server and get response"""
         try:
             messages = []
@@ -34,6 +34,9 @@ class MCPClient:
                 session_id=request.session_id,
                 client_phone=request.session_id,
             )
+            if result is None:
+                logger.error("Empty response from agent")
+                return None
 
             CallToolResult(content=[TextContent(type=ContentType.TEXT, text=result)])
 
