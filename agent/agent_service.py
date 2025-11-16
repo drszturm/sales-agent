@@ -3,16 +3,18 @@ import logging
 
 import httpx
 from psycopg_pool import ConnectionPool
+from langgraph.checkpoint.postgres import PostgresSaver
 
 from agent.deepseek_langchain_service import DeepSeekLCService
 from agent.gemini_langchain import GoogleLCService
 
-pool = ConnectionPool(
+connection_pool = ConnectionPool(
     # Example configuration"postgresql://{settings.DB_USER}:{settings.DB_PASS}@{settings.DB_HOST}:5432/{settings.DB_NAME}"
     conninfo="postgresql://postgres:ADMIN@localhost:5432/postgres?sslmode=disable",
     max_size=20,
 )
-
+checkpointer = PostgresSaver(conn=connection_pool)
+checkpointer.setup()
 # Uses the pickle module for serialization
 # Make sure that you're only de-serializing trusted data
 # (e.g., payloads that you have serialized yourself).
@@ -26,8 +28,8 @@ logger = logging.getLogger(__name__)
 class AgentService:
     def __init__(self):
         self.client = httpx.AsyncClient()
-        self.gemini = GoogleLCService(pool)
-        self.deepseek = DeepSeekLCService(pool)
+        self.gemini = GoogleLCService(checkpointer)
+        self.deepseek = DeepSeekLCService(checkpointer)
         self.chatgpt = None  # Placeholder for ChatGPT service if needed
 
     async def chat_completion(

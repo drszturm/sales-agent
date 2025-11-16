@@ -10,7 +10,6 @@ from langchain.agents import create_agent
 from langchain.tools import tool
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langgraph.checkpoint.postgres import PostgresSaver
-from psycopg_pool import ConnectionPool
 
 from config import settings
 from sales.customer_management import CustomerManager
@@ -28,10 +27,9 @@ logger = logging.getLogger(__name__)
 
 
 class GoogleLCService:
-    def __init__(self, connection_pool: ConnectionPool):
+    def __init__(self, checkpointer: PostgresSaver):
         self.api_key = settings.GEMINI_API_KEY
-        self.checkpointer = PostgresSaver(conn=connection_pool)
-        self.checkpointer.setup()
+
         self.model = ChatGoogleGenerativeAI(
             model="gemini-2.5-flash",
             temperature=0.4,
@@ -42,7 +40,7 @@ class GoogleLCService:
         )
 
         self.llm = create_agent(
-            checkpointer=self.checkpointer,
+            checkpointer=checkpointer,
             model=self.model,  # intalled model="claude-sonnet-4-5-20250929",
             tools=[load_products, set_customer_contact, get_customer_by_phone_number],
             system_prompt="You are a concise, accurate sales assistant for Bom Preço Supermercados (Av. 9 de Julho, 1234, SP)."
@@ -96,13 +94,14 @@ class GoogleLCService:
                 {"configurable": {"thread_id": client_phone}},
             )
             # result = [resp["text"] for resp in response["messages"][-1].content]
-            logger.info(response["messages"][-1].content[0])
+
             # print("Response content:", response["messages"][-1])
             agent_response = (
                 response["messages"][-1].content
                 if isinstance(response["messages"][-1].content, str)
                 else response["messages"][-1].content[0]["text"]
             )
+            logger.info(agent_response)
             return agent_response
         except Exception as e:
             logger.error(f"GoogleLCService chat_completion error: {str(e)}")

@@ -37,12 +37,11 @@ if not os.getenv("DEEPSEEK_API_KEY"):
 
 
 class DeepSeekLCService:
-    def __init__(self, connection_pool: ConnectionPool):
+    def __init__(self, checkpointer: PostgresSaver):
         self.api_key = settings.DEEPSEEK_API_KEY
-        self.checkpointer = PostgresSaver(conn=connection_pool)
-        self.checkpointer.setup()
+
         self.llm = create_agent(
-            checkpointer=self.checkpointer,
+            checkpointer=checkpointer,
             model=model,  # intalled model="claude-sonnet-4-5-20250929",
             tools=[load_products, set_customer_contact, get_customer_by_phone_number],
             system_prompt="You are a helpful supermarket salesman.Be concise and accurate."
