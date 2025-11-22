@@ -1,13 +1,14 @@
 import logging
 from typing import Any
-import pandas as pd
+
 import httpx
-from agent.claude_langchain import ClaudeLCService
-from agent.deepseek_langchain_service import DeepSeekLCService
-from agent.gemini_langchain import GoogleLCService
-from psycopg_pool import ConnectionPool
-from langgraph.checkpoint.postgres import PostgresSaver
+import pandas as pd
 from langchain.tools import tool
+from langgraph.checkpoint.postgres import PostgresSaver
+from psycopg_pool import ConnectionPool
+
+from agent.claude_langchain import ClaudeLCService
+from agent.gemini_langchain import GoogleLCService
 from config import settings
 from sales.customer_management import CustomerManager
 from sales.customer_schema import CustomerCreate

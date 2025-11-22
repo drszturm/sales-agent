@@ -70,7 +70,7 @@ class CustomerService:
     def update_customer_address(self, phone: str, address: str) -> Customer | None:
         db_customer = self.get_customer(phone)
         if db_customer:
-            setattr(db_customer, "address", address)
+            db_customer.address = address
             self.db.commit()
             self.db.refresh(db_customer)
         return db_customer

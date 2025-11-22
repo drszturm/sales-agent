@@ -3,17 +3,12 @@
 import getpass
 import logging
 import os
-from typing import Any
 
-import pandas as pd
 from langchain.agents import create_agent
-from langchain.tools import tool
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langgraph.checkpoint.postgres import PostgresSaver
 
 from config import settings
-from sales.customer_management import CustomerManager
-from sales.customer_schema import CustomerCreate
 
 # Uses the pickle module for serialization
 # Make sure that you're only de-serializing trusted data
