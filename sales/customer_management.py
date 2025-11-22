@@ -49,3 +49,17 @@ class CustomerManager:
     @instrument
     async def get_customers(self, skip: int = 0, limit: int = 100) -> Any:
         return self.db.query(Customer).offset(skip).limit(limit).all()
+
+    @instrument
+    def update_customer_address(
+        self, customer_phone: str, address: str, db: Session = Depends(get_db)
+    ):
+        try:
+            service = CustomerService(self.db)
+            return service.update_customer_address(
+                customer_phone,
+                address,
+            )
+        except Exception as e:
+            logger.error(f"Error creating customer: {e}")
+            raise
