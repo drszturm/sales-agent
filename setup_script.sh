@@ -56,3 +56,18 @@ deactivate
 
 echo "System setup complete. You can now clone your application repository to $PROJECT_DIR"
 echo "and configure Gunicorn and Nginx for deployment."
+
+
+    [Unit]
+    Description=My FastAPI Application
+    After=network.target
+
+    [Service]
+    User=your_username  # Replace with your actual Ubuntu username
+    WorkingDirectory=/home/ubuntu/app/sales-agent
+    Environment=/home/ubuntu/app/sales-agent/.env
+    ExecStart=/home/ubuntu/app/sales-agent/venv/bin/rq worker
+    Restart=always
+
+    [Install]
+    WantedBy=multi-user.target
